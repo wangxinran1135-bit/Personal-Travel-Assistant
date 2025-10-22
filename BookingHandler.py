@@ -113,7 +113,7 @@ class BookingHandler:
                 return {"status": new_status, "booking_id": booking_id, "confirmation_code": confirmation_code}
 
         except Exception as e:
-            if 'conn' in locals() and self.conn:
+            if hasattr(self, 'conn') and self.conn:
                 self.conn.rollback()
             print(f"A database error occurred: {e}")
             return {"status": "Error", "message": str(e)}
@@ -127,7 +127,7 @@ class BookingHandler:
                 cur.execute(sql_cancel_booking, (booking_id,))
                 
                # 找到关联的日历事件也更新
-                sql_cancel_event = "UPDATE calendar_events SET sync_status = 'Cancelled' WHERE booking_id = %s"
+                sql_cancel_event = "UPDATE calendar_events SET sync_status = 'Failed' WHERE booking_id = %s"
                 cur.execute(sql_cancel_event, (booking_id,))
                 
                 self.conn.commit()
