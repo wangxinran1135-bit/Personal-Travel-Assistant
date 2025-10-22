@@ -2,10 +2,10 @@ import psycopg2
 from typing import Dict, Any, List
 
 # Assuming these are valid imports from your project structure
-from itinerary_planner import ItineraryPlanner
-from knowledge_base import KnowledgeBase
-from goal_manager import UserPreferences
-from booking_handler import BookingHandler
+from ItineraryPlanner import ItineraryPlanner
+from KnowledgeBase import KnowledgeBase
+from GoalManager import UserPreferences
+from BookingHandler import BookingHandler
 
 class ReplanEngine:
 
