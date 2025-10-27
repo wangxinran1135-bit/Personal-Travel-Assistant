@@ -1,11 +1,3 @@
-# frontend_weather_route.py
-# -----------------------------------------------------------------------------
-# PTA — Weather Alerts & Route Planning (Streamlit)
-# 最小可用版：先尝试调你后端；失败就走内置假数据，保证“能跑通”和“能看到东西”。
-# 你可以把 API_BASE 改成你 Flask 的实际地址；如果你用的是你们现有的 app.py，
-# 只要提供相应的 /api/weather_alerts 和 /api/route_plan（或你自定义的）即可对上。
-# -----------------------------------------------------------------------------
-
 import math
 import json
 from datetime import date, datetime
@@ -16,22 +8,19 @@ import pandas as pd
 import streamlit as st
 import pydeck as pdk
 
-# -------------------------------
-# Basic config
-# -------------------------------
-st.set_page_config(page_title="PTA — Weather & Routing", page_icon="🌦️", layout="wide")
 
-# 允许在侧边栏临时改后端地址；默认指向本机 Flask
+# 
+st.set_page_config(page_title="PTA — Weather & Routing", '''page_icon="🌦️"''', layout="wide")
+
+# 侧边栏改后端地址，默认指向本机Flask
 if "API_BASE" not in st.session_state:
     st.session_state.API_BASE = "http://127.0.0.1:5000"
 
-# -------------------------------
-# 小工具们（尽量“人味儿”的注释）
-# -------------------------------
+
 
 def ping_backend(api_base: str) -> Tuple[bool, str]:
     """
-    轻拍一下后端，看它在不在。没有 /api/ping 也没关系，试错不崩。
+    看后端在不在线。
     """
     try:
         resp = requests.get(f"{api_base}/api/ping", timeout=5)
@@ -68,7 +57,7 @@ def call_weather_alerts(api_base: str, city: str, d: date) -> Dict:
             return r.json()
     except Exception:
         pass
-    # 后端没准备好？那就用一份看得见的“假数据”，让队友/老师先看到形态
+    # 假数据”
     return {
         "success": True,
         "city": city,
@@ -135,7 +124,7 @@ def known_place(name: str) -> Optional[Tuple[float, float]]:
     }
     return table.get(key, None)
 
-def mock_route(origin: Tuple[float, float], dest: Tuple[float, float]) -> Dict:
+'''def mock_route(origin: Tuple[float, float], dest: Tuple[float, float]) -> Dict:
     """
     兜底方案：如果后端未就绪，也没有 polyline，那就用 2 点直线插值出一条“像路”的线。
     不是导航，但能证明“地图图层”和“文字步骤”都工作了。
@@ -149,7 +138,7 @@ def mock_route(origin: Tuple[float, float], dest: Tuple[float, float]) -> Dict:
         {"instruction": f"从起点出发，沿直线前进约 {km:.1f} km（示意）", "distance_km": km, "duration_min": km/4.5*60 if km>0 else 3}
     ]
     return {"success": True, "points": pts, "steps": steps}
-
+'''
 def call_route_plan(api_base: str, origin_txt: str, dest_txt: str, mode: str) -> Dict:
     """
     尝试 POST /api/route_plan（推荐请求体）：
@@ -165,7 +154,7 @@ def call_route_plan(api_base: str, origin_txt: str, dest_txt: str, mode: str) ->
       "polyline": "...."  # 可选，或者直接返回 "points":[{"lat":..,"lon":..}, ...]
     }
     """
-    # 1) 先直接打后端
+    # 接后端
     payload = {"origin": origin_txt, "destination": dest_txt, "mode": mode}
     try:
         r = requests.post(f"{api_base}/api/route_plan", json=payload, timeout=15)
@@ -174,13 +163,12 @@ def call_route_plan(api_base: str, origin_txt: str, dest_txt: str, mode: str) ->
     except Exception:
         pass
 
-    # 2) 后端还没对上？那我们聪明点：识别几个常见地标，画出来
+    '''# 假数据
     o = known_place(origin_txt)
     d = known_place(dest_txt)
     if o and d:
         return mock_route(o, d)
 
-    # 3) 两边都没命中，就给个“纯文字说明”，至少能看步骤
     return {
         "success": True,
         "steps": [
@@ -253,10 +241,10 @@ def draw_route_map(points: List[Tuple[float, float]]):
         layers=[line_layer, scatter_layer],
         tooltip={"text": "{label}"}
     ))
+'''
 
-# -------------------------------
+
 # 侧边栏
-# -------------------------------
 st.sidebar.header("Settings")
 api_base_input = st.sidebar.text_input("API_BASE (Flask backend URL)", value=st.session_state.API_BASE)
 if api_base_input != st.session_state.API_BASE:
@@ -273,12 +261,11 @@ with colB:
 st.sidebar.markdown("---")
 st.sidebar.caption("This page is safe to run without a live backend (mock mode).")
 
-# -------------------------------
-# 页面内容：两个 Tab（天气｜路径）
-# -------------------------------
+
+# 页面内容
 st.title("PTA — Weather Alerts & Route Planning")
 
-tab1, tab2 = st.tabs(["🌦️ Weather Alerts", "🧭 Route Planner"])
+tab1, tab2 = st.tabs(["Weather Alerts", "Route Planner"])
 
 with tab1:
     st.subheader("Weather Alerts")
@@ -336,7 +323,7 @@ with tab2:
             poly = res.get("polyline")
             pts = res.get("points")
 
-            # 文字步骤：老师喜欢能“看懂”的那种
+            # 文字步骤
             st.markdown("#### Directions")
             if steps:
                 for i, s in enumerate(steps, 1):
@@ -371,6 +358,7 @@ with tab2:
             else:
                 st.caption("（后端没给几何；已用文字步骤展示。等几何返回后会自动出现地图。）")
 
-# 底部的小提示
+# 底部提示
 st.markdown("---")
 st.caption("Tip: Hook /api/weather_alerts & /api/route_plan to your agent. This UI will adapt automatically.")
+
